@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Doctor Appointment Scheduler</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.tailwindcss.com/3.3.0?plugins=forms,typography,aspect-ratio,line-clamp"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
+    <style>
+        .fade-in { animation: fadeIn 0.5s ease-in; }
+        .slide-in { animation: slideIn 0.3s ease-out; }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        @keyframes slideIn {
+            from { transform: translateY(-10px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        
+        .transition-all {
+            transition: all 0.3s ease;
+        }
+        
+        .card-hover:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+        
+        .hero-section {
+            background-image: linear-gradient(to right, #4facfe 0%, #00f2fe 100%);
+            color: white;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 font-sans">
+    <div class="container mx-auto px-4">
+        <!-- Navigation -->
+        <nav class="flex justify-between items-center py-4">
+            <div class="flex items-center">
+                <div class="text-2xl font-bold text-blue-600 flex items-center">
+                    <i class="ri-heart-pulse-line mr-2 text-3xl"></i>
+                    MediSchedule
+                </div>
+                <div class="ml-10 hidden md:flex space-x-6">
+                    <a href="#" class="text-gray-700 hover:text-blue-600 transition-all">Home</a>
+                    <a href="#doctors" class="text-gray-700 hover:text-blue-600 transition-all">Doctors</a>
+                    <a href="#appointments" class="text-gray-700 hover:text-blue-600 transition-all">Appointments</a>
+                    <a href="#" class="text-gray-700 hover:text-blue-600 transition-all">About Us</a>
+                </div>
+            </div>
+            <div class="space-x-4">
+                <button id="loginBtn" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-all">
+                    <i class="ri-login-circle-line mr-1"></i> Login
+                </button>
+                <button id="registerBtn" class="bg-white border border-blue-600 text-blue-600 px-4 py-2 rounded-lg hover:bg-blue-50 transition-all">
+                    <i class="ri-user-add-line mr-1"></i> Register
+                </button>
+            </div>
+        </nav>
+
+        <!-- Hero Section -->
+        <div class="hero-section rounded-2xl mt-6 p-10 flex flex-col md:flex-row items-center">
+            <div class="md:w-1/2 mb-8 md:mb-0">
+                <h1 class="text-4xl font-bold mb-4">Your Health, Our Priority</h1>
+                <p class="text-xl opacity-90 mb-6">Book appointments with top doctors easily and manage your healthcare journey efficiently.</p>
+                <button onclick="scrollToSearch()" class="bg-white text-blue-600 px-6 py-3 rounded-lg font-semibold hover:bg-opacity-90 transition-all shadow-lg">
+                    Find a Doctor Now
+                </button>
+            </div>
+            <div class="md:w-1/2 flex justify-center">
+                <img src="https://cdn-icons-png.flaticon.com/512/3063/3063176.png" alt="Doctor Illustration" class="w-64 h-64">
+            </div>
+        </div>
+
+        <!-- Main Content Area -->
+        <div id="mainContent" class="mt-10">
+            <h2 id="doctors" class="text-2xl font-bold mb-6 text-gray-800 flex items-center">
+                <i class="ri-user-search-line mr-2"></i>Find Your Doctor
+            </h2>
+            <div class="grid md:grid-cols-3 gap-8">
+                <!-- Doctor Search Section -->
+                <div class="bg-white p-6 rounded-xl shadow-sm hover:shadow-md transition-all col-span-1">
+                    <h3 class="text-lg font-semibold mb-4 text-gray-700">Search Filters</h3>
+                    <div class="space-y-4">
+                        <div>
+                            <label for="specialtySearch" class="block text-sm font-medium text-gray-700 mb-1">Specialty</label>
+                            <div class="relative">
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <i class="ri-stethoscope-line text-gray-400"></i>
+                                </div>
+                                <input type="text" id="specialtySearch" placeholder="e.g. Cardiology, Pediatrics" 
+                                    class="w-full pl-10 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <label for="locationFilter" class="block text-sm font-medium text-gray-700 mb-1">Location</label>
+                            <div class="relative">
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <i class="ri-map-pin-line text-gray-400"></i>
+                                </div>
+                                <select id="locationFilter" class="w-full pl-10 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                    <option value="">All Locations</option>
+                                    <!-- Dynamic locations will be populated via JS -->
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="pt-2">
+                            <button id="clearFilters" class="text-sm text-blue-600 hover:text-blue-800">
+                                <i class="ri-refresh-line mr-1"></i> Clear Filters
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Doctor Results Section -->
+                <div class="bg-white p-6 rounded-xl shadow-sm hover:shadow-md transition-all col-span-2">
+                    <h3 class="text-lg font-semibold mb-4 text-gray-700">Doctor Results</h3>
+                    <div id="doctorResults" class="space-y-4 max-h-96 overflow-y-auto pr-2">
+                        <!-- Doctor results will be dynamically populated -->
+                        <div class="flex items-center justify-center h-32 text-gray-500">
+                            <div class="text-center">
+                                <i class="ri-search-line text-4xl mb-2"></i>
+                                <p>Enter a specialty or select a location to find doctors</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Appointment Booking Section -->
+            <h2 id="appointments" class="text-2xl font-bold mb-6 mt-12 text-gray-800 flex items-center">
+                <i class="ri-calendar-check-line mr-2"></i>Book an Appointment
+            </h2>
+            <div class="bg-white p-8 rounded-xl shadow-sm hover:shadow-md transition-all">
+                <form id="appointmentForm" class="space-y-6">
+                    <div class="grid md:grid-cols-2 gap-6">
+                        <div>
+                            <label for="fullName" class="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
+                            <input type="text" id="fullName" name="full_name" placeholder="John Doe" required 
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <div>
+                            <label for="email" class="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
+                            <input type="email" id="email" name="email" placeholder="john@example.com" required 
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                    </div>
+                    
+                    <div class="grid md:grid-cols-3 gap-6">
+                        <div>
+                            <label for="doctorSelect" class="block text-sm font-medium text-gray-700 mb-1">Select Doctor</label>
+                            <select id="doctorSelect" name="doctor_id" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                                <option value="">Choose a Doctor</option>
+                                <!-- Doctors will be dynamically populated -->
+                            </select>
+                        </div>
+                        <div>
+                            <label for="appointmentDate" class="block text-sm font-medium text-gray-700 mb-1">Appointment Date</label>
+                            <input type="date" id="appointmentDate" name="date" required
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <div>
+                            <label for="timeSlot" class="block text-sm font-medium text-gray-700 mb-1">Available Time</label>
+                            <select id="timeSlot" name="slot_id" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                                <option value="">Select Time Slot</option>
+                                <!-- Time slots will be dynamically populated -->
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label for="notes" class="block text-sm font-medium text-gray-700 mb-1">Notes (Optional)</label>
+                        <textarea id="notes" name="notes" rows="3" placeholder="Any specific concerns or information for the doctor" 
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+                    </div>
+                    
+                    <div class="flex justify-end">
+                        <button type="submit" class="bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-all">
+                            <i class="ri-calendar-check-fill mr-1"></i> Book Appointment
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- User Dashboard Section -->
+        <div id="userDashboard" class="hidden bg-white p-8 rounded-xl shadow-sm mt-10">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold text-gray-800 flex items-center">
+                    <i class="ri-dashboard-line mr-2"></i> My Dashboard
+                </h2>
+                <button id="backToHomeBtn" class="flex items-center text-blue-600 hover:text-blue-800">
+                    <i class="ri-arrow-left-line mr-1"></i> Back to Home
+                </button>
+            </div>
+            
+            <div class="bg-blue-50 rounded-lg p-4 mb-6 flex items-center">
+                <i class="ri-user-smile-line text-blue-600 text-2xl mr-4"></i>
+                <div>
+                    <p class="font-medium text-blue-800" id="welcomeMessage">Welcome back!</p>
+                    <p class="text-sm text-blue-600" id="userEmail"></p>
+                </div>
+            </div>
+            
+            <div class="tabs flex border-b mb-6">
+                <button id="appointmentsTab" class="py-2 px-6 text-blue-600 border-b-2 border-blue-600 font-semibold">
+                    <i class="ri-calendar-line mr-1"></i> My Appointments
+                </button>
+                <button id="profileTab" class="py-2 px-6 text-gray-600 hover:text-blue-600">
+                    <i class="ri-user-settings-line mr-1"></i> Profile
+                </button>
+            </div>
+            
+            <div id="appointmentsContent" class="tab-content">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="font-semibold text-gray-700">Upcoming Appointments</h3>
+                    <select id="appointmentFilter" class="text-sm border border-gray-300 rounded-md px-3 py-1">
+                        <option value="all">All Appointments</option>
+                        <option value="upcoming">Upcoming</option>
+                        <option value="past">Past Appointments</option>
+                        <option value="pending">Pending</option>
+                        <option value="confirmed">Confirmed</option>
+                    </select>
+                </div>
+                
+                <div id="appointmentsContainer" class="space-y-4">
+                    <!-- Appointments will be dynamically populated -->
+                    <div class="flex justify-center py-8 text-gray-500">
+                        <div class="text-center">
+                            <i class="ri-calendar-line text-4xl mb-2"></i>
+                            <p>Loading your appointments...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div id="profileContent" class="tab-content hidden">
+                <h3 class="font-semibold text-gray-700 mb-4">Personal Information</h3>
+                <form id="profileForm" class="space-y-6">
+                    <div class="grid md:grid-cols-2 gap-6">
+                        <div>
+                            <label for="profileFirstName" class="block text-sm font-medium text-gray-700 mb-1">First Name</label>
+                            <input type="text" id="profileFirstName" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <div>
+                            <label for="profileLastName" class="block text-sm font-medium text-gray-700 mb-1">Last Name</label>
+                            <input type="text" id="profileLastName" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                    </div>
+                    <div>
+                        <label for="profilePhone" class="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
+                        <input type="tel" id="profilePhone" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label for="profileAddress" class="block text-sm font-medium text-gray-700 mb-1">Address</label>
+                        <textarea id="profileAddress" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+                    </div>
+                    <div class="flex justify-end">
+                        <button type="submit" class="bg-blue-600 text-white px-5 py-2 rounded-lg font-semibold hover:bg-blue-700 transition-all">
+                            <i class="ri-save-line mr-1"></i> Save Changes
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <footer class="mt-20 py-8 border-t">
+            <div class="grid md:grid-cols-4 gap-8">
+                <div>
+                    <h3 class="font-bold text-lg mb-4">MediSchedule</h3>
+                    <p class="text-gray-600">Your trusted platform for booking medical appointments online.</p>
+                </div>
+                <div>
+                    <h3 class="font-bold text-lg mb-4">Quick Links</h3>
+                    <ul class="space-y-2 text-gray-600">
+                        <li><a href="#" class="hover:text-blue-600">Home</a></li>
+                        <li><a href="#doctors" class="hover:text-blue-600">Find Doctors</a></li>
+                        <li><a href="#appointments" class="hover:text-blue-600">Book Appointment</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h3 class="font-bold text-lg mb-4">Contact</h3>
+                    <ul class="space-y-2 text-gray-600">
+                        <li class="flex items-center"><i class="ri-mail-line mr-2"></i> support@medischedule.com</li>
+                        <li class="flex items-center"><i class="ri-phone-line mr-2"></i> +1 (555) 123-4567</li>
+                        <li class="flex items-center"><i class="ri-map-pin-line mr-2"></i> 123 Medical Avenue, Health City</li>
+                    </ul>
+                </div>
+                <div>
+                    <h3 class="font-bold text-lg mb-4">Follow Us</h3>
+                    <div class="flex space-x-4">
+                        <a href="#" class="text-gray-600 hover:text-blue-600"><i class="ri-facebook-fill text-xl"></i></a>
+                        <a href="#" class="text-gray-600 hover:text-blue-600"><i class="ri-twitter-fill text-xl"></i></a>
+                        <a href="#" class="text-gray-600 hover:text-blue-600"><i class="ri-instagram-line text-xl"></i></a>
+                        <a href="#" class="text-gray-600 hover:text-blue-600"><i class="ri-linkedin-fill text-xl"></i></a>
+                    </div>
+                </div>
+            </div>
+            <div class="text-center mt-12 text-gray-500 text-sm">
+                &copy; 2023 MediSchedule. All rights reserved.
+            </div>
+        </footer>
+    </div>
+
+    <!-- Appointment Details Modal -->
+    <div id="appointmentDetailsModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+        <div class="bg-white p-6 rounded-xl w-full max-w-md m-4 fade-in">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-semibold">Appointment Details</h2>
+                <button id="closeDetailsModal" class="text-gray-500 hover:text-gray-800">
+                    <i class="ri-close-line text-xl"></i>
+                </button>
+            </div>
+            <div id="appointmentDetailsContent" class="py-2">
+                <!-- Appointment details will be dynamically populated -->
+                <div class="flex justify-center py-6">
+                    <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600"></div>
+                </div>
+            </div>
+            <div class="flex justify-end mt-6">
+                <button id="closeDetailsBtn" class="bg-gray-200 text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-300 transition-all">
+                    Close
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for Login/Register -->
+    <div id="authModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+        <div class="bg-white p-8 rounded-xl w-full max-w-md m-4 fade-in">
+            <div class="text-center mb-6">
+                <h2 id="modalTitle" class="text-2xl font-bold">Login</h2>
+                <p class="text-gray-600 mt-1">Access your MediSchedule account</p>
+            </div>
+            <form id="authForm" class="space-y-4">
+                <div>
+                    <label for="authEmail" class="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
+                    <input type="email" id="authEmail" placeholder="your@email.com" required 
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div>
+                    <label for="authPassword" class="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                    <input type="password" id="authPassword" placeholder="••••••••" required 
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <button type="submit" class="w-full bg-blue-600 text-white py-2 rounded-lg font-semibold hover:bg-blue-700 transition-all">
+                    <span id="authButtonText">Login</span>
+                </button>
+            </form>
+            <p id="switchAuthMode" class="text-center mt-4 text-blue-600 cursor-pointer hover:text-blue-800">
+                Need an account? Register
+            </p>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
